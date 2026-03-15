@@ -1006,6 +1006,17 @@ async function initMsal() {
 
 async function login() {
   try {
+    if (!msalInstance) {
+      msalInstance = new msal.PublicClientApplication({
+        auth: {
+          clientId:    APP_CONFIG.clientId,
+          authority:   APP_CONFIG.authority,
+          redirectUri: APP_CONFIG.redirectUri,
+        },
+        cache: { cacheLocation: "localStorage" }
+      });
+      await msalInstance.initialize();
+    }
     await msalInstance.loginPopup({ scopes: ["Files.Read"] });
     await getToken();
     restoreOrPick();
@@ -1492,4 +1503,5 @@ initMsal().catch(e => {
 
 </body>
 </html>
+
 
