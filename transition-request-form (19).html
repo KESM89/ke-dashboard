@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K&E Sheet Metal - Transition Request Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Stack dimension inputs vertically on mobile */
+            .dimension-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            /* Larger tap targets for mobile */
+            .form-group input,
+            .form-group select {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 14px;
+                min-height: 48px; /* Touch-friendly */
+            }
+            
+            /* Bigger buttons */
+            button {
+                padding: 16px !important;
+                font-size: 18px !important;
+                min-height: 52px;
+            }
+            
+            /* Bigger section headers */
+            .section h2 {
+                font-size: 20px;
+            }
+            
+            /* Better spacing on mobile */
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 18px;
+            }
+            
+            .alert {
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            /* Readable help text */
+            .help-text {
+                font-size: 13px;
+            }
+            
+            /* Bigger labels */
+            .form-group label {
+                font-size: 15px;
+            }
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .dimension-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            height: 20px;
+            width: 20px;
+        }
+        
+        #drawing-canvas {
+            width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .pricing-summary {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #d0e7f0;
+        }
+        
+        .pricing-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #3498db;
+        }
+        
+        .pricing-row label {
+            color: #555;
+        }
+        
+        .pricing-row .value {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .material-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin-top: 15px;
+        }
+        
+        .material-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #777;
+            margin-top: 3px;
+            font-style: italic;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>K&E Sheet Metal - Transition Request</h1>
+            <p>Custom HVAC Ductwork Fabrication</p>
+        </div>
+        
+        <div class="content">
+            <!-- LEFT COLUMN: INPUT FORM -->
+            <div>
+                <div class="section">
+                    <h2>Dimensions (inches)</h2>
+                    <div class="alert alert-info" style="margin-bottom: 15px;">
+                        Vertical orientation: Furnace on bottom, Duct on top
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Bottom Opening (Furnace Side)</label>
+                        <div class="dimension-row">
+                            <div>
+                                <input type="number" id="bottom-width" placeholder="Left to Right" value="20" oninput="calculate()">
+                                <span class="help-text">Left to Right</span>
+                            </div>
+                            <div>
+                                <input type="number" id="bottom-height" placeholder="Front to Back" value="18" oninput="calculate()">
+                                <span class="help-text">Front to Back</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Top Opening (Existing Duct)</label>
+                        <div class="dimension-row">
+                            <div>
+                                <input type="number" id="top-width" placeholder="Left to Right" value="18" oninput="calculate()">
+                                <span class="help-text">Left to Right</span>
+                            </div>
+                            <div>
+                                <input type="number" id="top-height" placeholder="Front to Back" value="12" oninput="calculate()">
+                                <span class="help-text">Front to Back</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Height (to S-Lock overlap or connection point)</label>
+                        <input type="number" id="length" placeholder="Height in inches" value="24" oninput="calculate()">
+                        <span class="help-text">Vertical distance needed</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Edge Gaps (inches)</label>
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
+                            <strong>💡 How to measure:</strong><br>
+                            • <strong>Positive (+):</strong> Duct extends beyond furnace (gap)<br>
+                            • <strong>Negative (-):</strong> Furnace extends beyond duct (overlap/hanging out)
+                        </div>
+                        <div class="dimension-row">
+                            <div>
+                                <input type="number" step="0.125" id="gap-left-input" placeholder="0" value="2" oninput="calculateOppositeGap('left')">
+                                <span class="help-text">Left edge gap</span>
+                            </div>
+                            <div>
+                                <input type="number" step="0.125" id="gap-right-input" placeholder="0" value="-2" oninput="calculateOppositeGap('right')">
+                                <span class="help-text">Right edge gap (auto)</span>
+                            </div>
+                        </div>
+                        <div class="dimension-row" style="margin-top: 10px;">
+                            <div>
+                                <input type="number" step="0.125" id="gap-front-input" placeholder="0" value="0" oninput="calculateOppositeGap('front')">
+                                <span class="help-text">Front edge gap</span>
+                            </div>
+                            <div>
+                                <input type="number" step="0.125" id="gap-back-input" placeholder="0" value="-2" oninput="calculateOppositeGap('back')">
+                                <span class="help-text">Back edge gap (auto)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>Connection Types</h2>
+                    
+                    <div class="form-group">
+                        <label>Bottom Connection (Furnace Side)</label>
+                        <select id="bottom-connection" onchange="calculate()">
+                            <option value="plenum-bend" selected>Plenum Bend</option>
+                            <option value="1in-outside-flange">1" Outside Flange</option>
+                            <option value="1in-inside-flange">1" Inside Flange</option>
+                            <option value="s-lock">S-Lock</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Top Connection (Duct Side)</label>
+                        <select id="top-connection" onchange="calculate()">
+                            <option value="plenum-bend">Plenum Bend</option>
+                            <option value="1in-outside-flange">1" Outside Flange</option>
+                            <option value="1in-inside-flange">1" Inside Flange</option>
+                            <option value="s-lock" selected>S-Lock</option>
+                            <option value="capped">Capped (Solid Top)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Material Gauge</label>
+                        <select id="gauge" onchange="calculate()">
+                            <option value="26 4X8 G90" selected>26 Gauge G90 (Residential)</option>
+                            <option value="24 4x8 G90">24 Gauge G90 (Commercial)</option>
+                            <option value="22 4x8 G90">22 Gauge G90 (Heavy Duty)</option>
+                            <option value="20 4x8 G90">20 Gauge G90 (Industrial)</option>
+                            <option value=".040 4x8 3003-H14 Aluminum">Aluminum .040 3003-H14</option>
+                            <option value=".050 4x8 5052-H32 Aluminum">Aluminum .050 5052-H32</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="quantity" value="1" min="1" oninput="calculate()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RIGHT COLUMN: DRAWING & PRICING -->
+            <div>
+                <div class="section">
+                    <h2>Technical Drawings</h2>
+                    <canvas id="drawing-canvas" width="800" height="600"></canvas>
+                </div>
+                
+                <div class="section">
+                    <h2>Material Requirements</h2>
+                    <div class="material-info">
+                        <div class="material-row">
+                            <strong>Square Feet:</strong>
+                            <span id="material-sqft">0.00</span>
+                        </div>
+                        <div class="material-row">
+                            <strong>Weight (lbs):</strong>
+                            <span id="material-weight">0.00</span>
+                        </div>
+                        <div class="material-row">
+                            <strong>Slip Cleats:</strong>
+                            <span id="slip-cleats">0.00 ft</span>
+                        </div>
+                        <div class="material-row">
+                            <strong>Drive Cleats:</strong>
+                            <span id="drive-cleats">0.00 ft</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-secondary" onclick="printOrder()">Print Order</button>
+            <button class="btn btn-primary" onclick="submitOrder()">Submit Order</button>
+        </div>
+    </div>
+    
+    <script>
+        // Material reference data (needed for weight calculation)
+        const MATERIAL_DATA = {
+          gauges: {
+            '26 4X8 G90': { lbs_per_sqft: 0.906 },
+            '24 4x8 G90': { lbs_per_sqft: 1.156 },
+            '22 4x8 G90': { lbs_per_sqft: 1.406 },
+            '20 4x8 G90': { lbs_per_sqft: 1.656 },
+            '18 4x8 G90': { lbs_per_sqft: 2.156 },
+            '.040 4x8 3003-H14 Aluminum': { lbs_per_sqft: 0.577 },
+            '.050 4x8 5052-H32 Aluminum': { lbs_per_sqft: 0.729 },
+            '.063 4x8 5052-H32 Aluminum': { lbs_per_sqft: 0.918 },
+          }
+        };
+        
+        // State - always vertical orientation
+        const orientation = 'vertical';
+        
+        // Make canvas responsive
+        function resizeCanvas() {
+            const canvas = document.getElementById('drawing-canvas');
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth - 40; // Account for padding
+            
+            // Set canvas display size (CSS pixels)
+            canvas.style.width = '100%';
+            
+            // Set canvas resolution for mobile vs desktop
+            if (window.innerWidth <= 768) {
+                // Mobile: Stack views vertically, smaller resolution
+                canvas.width = Math.min(containerWidth, 600);
+                canvas.height = canvas.width * 2; // Taller for stacked views
+            } else {
+                // Desktop: Side by side views
+                canvas.width = Math.min(containerWidth, 800);
+                canvas.height = canvas.width * 0.75; // 4:3 aspect ratio
+            }
+            
+            // Redraw after resize
+            calculate();
+        }
+        
+        // Resize on load and window resize
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Auto-calculate opposite edge gap
+        function calculateOppositeGap(changedEdge) {
+            const topWidth = parseFloat(document.getElementById('top-width').value) || 0;
+            const topHeight = parseFloat(document.getElementById('top-height').value) || 0;
+            const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
+            const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
+            
+            if (!topWidth || !topHeight || !bottomWidth || !bottomHeight) {
+                calculate(); // Just recalculate without auto-filling
+                return;
+            }
+            
+            // Calculate opposite gap based on geometry
+            // Formula: Left gap + Right gap = (Top width - Bottom width)
+            // So: Right gap = (Top width - Bottom width) - Left gap
+            
+            if (changedEdge === 'left') {
+                const gapLeft = parseFloat(document.getElementById('gap-left-input').value) || 0;
+                const gapRight = (topWidth - bottomWidth) - gapLeft;
+                document.getElementById('gap-right-input').value = gapRight.toFixed(2);
+            } else if (changedEdge === 'right') {
+                const gapRight = parseFloat(document.getElementById('gap-right-input').value) || 0;
+                const gapLeft = (topWidth - bottomWidth) - gapRight;
+                document.getElementById('gap-left-input').value = gapLeft.toFixed(2);
+            } else if (changedEdge === 'front') {
+                const gapFront = parseFloat(document.getElementById('gap-front-input').value) || 0;
+                const gapBack = (topHeight - bottomHeight) - gapFront;
+                document.getElementById('gap-back-input').value = gapBack.toFixed(2);
+            } else if (changedEdge === 'back') {
+                const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
+                const gapFront = (topHeight - bottomHeight) - gapBack;
+                document.getElementById('gap-front-input').value = gapFront.toFixed(2);
+            }
+            
+            calculate();
+        }
+        
+        // Main calculation function
+        function calculate() {
+            // Get inputs
+            const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
+            const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
+            const topWidth = parseFloat(document.getElementById('top-width').value) || 0;
+            const topHeight = parseFloat(document.getElementById('top-height').value) || 0;
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const gauge = document.getElementById('gauge').value;
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const topConnection = document.getElementById('top-connection').value;
+            
+            // Get edge gaps directly from inputs
+            const gapLeft = parseFloat(document.getElementById('gap-left-input').value) || 0;
+            const gapRight = parseFloat(document.getElementById('gap-right-input').value) || 0;
+            const gapFront = parseFloat(document.getElementById('gap-front-input').value) || 0;
+            const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
+            
+            // Calculate center offset from BOTH edge gaps (average if they don't match perfectly)
+            // From geometry: gapLeft - gapRight = 2 * offsetHorizontal
+            const offsetHorizontal = (gapLeft - gapRight) / 2;
+            const offsetVertical = (gapFront - gapBack) / 2;
+            
+            if (!bottomWidth || !bottomHeight || !topWidth || !topHeight || !length) {
+                return; // Don't calculate if missing dimensions
+            }
+            
+            // Calculate material requirements (no pricing)
+            const topPerimeter = (topWidth + topHeight) * 2;
+            const bottomPerimeter = (bottomWidth + bottomHeight) * 2;
+            const avgPerimeter = (topPerimeter + bottomPerimeter) / 2;
+            const sqft = (avgPerimeter * length / 144) * quantity;
+            
+            // Add allowance for seams/connections (10%) and scrap waste (25%)
+            let totalSqft = sqft * 1.10 * 1.25;
+            
+            // Get material data for weight
+            const material = MATERIAL_DATA.gauges[gauge];
+            let weight = totalSqft * material.lbs_per_sqft;
+            
+            // Add top cap material if capped
+            if (topConnection === 'capped') {
+                const capSqft = (topWidth * topHeight) / 144 * quantity * 1.25; // Add scrap allowance to cap too
+                totalSqft += capSqft;
+                weight += capSqft * material.lbs_per_sqft;
+            }
+            
+            // Calculate slip and drive cleats
+            const slipFeet = ((Math.max(topWidth, bottomWidth) - 0.5) * 2 / 12) * quantity;
+            const driveFeet = ((Math.max(topHeight, bottomHeight) + 2) * 2 / 12) * quantity;
+            
+            // Update display
+            document.getElementById('material-sqft').textContent = totalSqft.toFixed(2);
+            document.getElementById('material-weight').textContent = weight.toFixed(2);
+            document.getElementById('slip-cleats').textContent = slipFeet.toFixed(2);
+            document.getElementById('drive-cleats').textContent = driveFeet.toFixed(2);
+            
+            // Redraw with calculated center offset and edge gaps
+            drawTransition(offsetHorizontal, offsetVertical, gapLeft, gapRight, gapFront, gapBack);
+        }
+        
+        // Format gap measurement
+        function formatGap(gap) {
+            const absGap = Math.abs(gap);
+            if (gap > 0) {
+                return `+${absGap.toFixed(2)}" gap`;
+            } else if (gap < 0) {
+                return `${absGap.toFixed(2)}" overlap`;
+            } else {
+                return `0" (flush)`;
+            }
+        }
+        
+        // Draw dual 2D orthographic views (Front + Side)
+        function drawTransition(offsetHorizontal, offsetVertical, gapLeft, gapRight, gapFront, gapBack) {
+            const canvas = document.getElementById('drawing-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Get dimensions
+            const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
+            const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
+            const topWidth = parseFloat(document.getElementById('top-width').value) || 0;
+            const topHeight = parseFloat(document.getElementById('top-height').value) || 0;
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            
+            const topConnection = document.getElementById('top-connection').value;
+            const bottomConnection = document.getElementById('bottom-connection').value;
+            
+            if (!bottomWidth || !bottomHeight || !topWidth || !topHeight || !length) {
+                // Show placeholder
+                ctx.fillStyle = '#95a5a6';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Enter dimensions to see technical drawings', width / 2, height / 2);
+                return;
+            }
+            
+            // Check if mobile (stacked) or desktop (side-by-side)
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // MOBILE: Stack views vertically
+                const viewHeight = height / 2;
+                
+                // FRONT VIEW (Top half)
+                drawFrontView(ctx, 0, 0, width, viewHeight, bottomWidth, topWidth, length, 
+                             offsetHorizontal, gapLeft, gapRight, topConnection, bottomConnection);
+                
+                // Divider line
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(20, viewHeight);
+                ctx.lineTo(width - 20, viewHeight);
+                ctx.stroke();
+                
+                // SIDE VIEW (Bottom half)
+                drawSideView(ctx, 0, viewHeight, width, viewHeight, bottomHeight, topHeight, length,
+                            offsetVertical, gapFront, gapBack, topConnection, bottomConnection);
+            } else {
+                // DESKTOP: Side by side
+                const halfWidth = width / 2;
+                
+                // FRONT VIEW (Left side)
+                drawFrontView(ctx, 0, 0, halfWidth, height, bottomWidth, topWidth, length, 
+                             offsetHorizontal, gapLeft, gapRight, topConnection, bottomConnection);
+                
+                // Divider line
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(halfWidth, 40);
+                ctx.lineTo(halfWidth, height - 40);
+                ctx.stroke();
+                
+                // SIDE VIEW (Right side)
+                drawSideView(ctx, halfWidth, 0, halfWidth, height, bottomHeight, topHeight, length,
+                            offsetVertical, gapFront, gapBack, topConnection, bottomConnection);
+            }
+        }
+        
+        function drawFrontView(ctx, x, y, w, h, bottomWidth, topWidth, length, offsetX, 
+                              gapLeft, gapRight, topConn, bottomConn) {
+            const centerX = x + w / 2;
+            const topY = y + h * 0.25;
+            const bottomY = y + h * 0.75;
+            
+            // Scale to fit
+            const maxWidth = Math.max(bottomWidth, topWidth) + Math.abs(offsetX) * 2 + 10;
+            const scale = Math.min((w * 0.7) / maxWidth, (h * 0.4) / length);
+            
+            // TOP rectangle (DUCT - FIXED, always centered)
+            const topLeft = centerX - (topWidth * scale) / 2;
+            const topRight = centerX + (topWidth * scale) / 2;
+            
+            if (topConn === 'capped') {
+                ctx.fillStyle = '#34495e';
+            } else if (topConn === 's-lock') {
+                ctx.fillStyle = '#b0c4de';
+            } else {
+                ctx.fillStyle = '#95a5a6';
+            }
+            ctx.fillRect(topLeft, topY - 8, topWidth * scale, 16);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(topLeft, topY - 8, topWidth * scale, 16);
+            
+            // BOTTOM rectangle (FURNACE - offset by center offset)
+            const bottomLeft = centerX - (bottomWidth * scale) / 2 + (offsetX * scale);
+            const bottomRight = centerX + (bottomWidth * scale) / 2 + (offsetX * scale);
+            
+            ctx.fillStyle = bottomConn.includes('flange') || bottomConn === 'plenum-bend' ? '#8b9dc3' : '#95a5a6';
+            ctx.fillRect(bottomLeft, bottomY - 8, bottomWidth * scale, 16);
+            ctx.strokeRect(bottomLeft, bottomY - 8, bottomWidth * scale, 16);
+            
+            // Connect corners
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 1.5;
+            [
+                [topLeft, topY - 8, bottomLeft, bottomY - 8],
+                [topRight, topY - 8, bottomRight, bottomY - 8],
+                [topLeft, topY + 8, bottomLeft, bottomY + 8],
+                [topRight, topY + 8, bottomRight, bottomY + 8]
+            ].forEach(([x1, y1, x2, y2]) => {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            });
+            
+            // Dimension lines
+            ctx.strokeStyle = '#3498db';
+            ctx.fillStyle = '#3498db';
+            ctx.lineWidth = 1;
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            
+            // Top width
+            drawDimensionLine(ctx, topLeft, topY - 20, topRight, topY - 20);
+            ctx.fillText(`${topWidth}"`, centerX, topY - 25);
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Existing Duct (fixed)', centerX, topY - 38);
+            
+            // Bottom width
+            ctx.fillStyle = '#3498db';
+            ctx.font = 'bold 12px Arial';
+            drawDimensionLine(ctx, bottomLeft, bottomY + 30, bottomRight, bottomY + 30);
+            ctx.fillText(`${bottomWidth}"`, bottomLeft + (bottomWidth * scale) / 2, bottomY + 50);
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Furnace', bottomLeft + (bottomWidth * scale) / 2, bottomY + 63);
+            
+            // Height dimension
+            ctx.fillStyle = '#e67e22';
+            const heightLeft = Math.min(topLeft, bottomLeft) - 40;
+            drawDimensionLine(ctx, heightLeft, topY, heightLeft, bottomY);
+            ctx.save();
+            ctx.translate(heightLeft - 10, (topY + bottomY) / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(`${length}"`, 0, 0);
+            ctx.restore();
+            
+            // Edge gap annotations
+            if (offsetX !== 0 || gapLeft !== 0 || gapRight !== 0) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = '#e74c3c';
+                
+                // Left edge gap
+                ctx.textAlign = 'right';
+                let leftGapText = '';
+                if (gapLeft > 0.01) {
+                    leftGapText = `Duct ${gapLeft.toFixed(2)}" out`;
+                } else if (gapLeft < -0.01) {
+                    leftGapText = `Furn ${Math.abs(gapLeft).toFixed(2)}" out`;
+                } else {
+                    leftGapText = 'Flush';
+                }
+                ctx.fillText(leftGapText, Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 30);
+                
+                // Right edge gap
+                ctx.textAlign = 'left';
+                let rightGapText = '';
+                if (gapRight > 0.01) {
+                    rightGapText = `Duct ${gapRight.toFixed(2)}" out`;
+                } else if (gapRight < -0.01) {
+                    rightGapText = `Furn ${Math.abs(gapRight).toFixed(2)}" out`;
+                } else {
+                    rightGapText = 'Flush';
+                }
+                ctx.fillText(rightGapText, Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 30);
+                
+                // Center offset indicator (optional - shows the calculated offset)
+                if (Math.abs(offsetX) > 0.01) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, topY + 8);
+                    ctx.lineTo(centerX, bottomY - 8);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            // Labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('FRONT VIEW', centerX, y + 20);
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Left/Right gaps ("out" = extends beyond)', centerX, y + 33);
+        }
+        
+        function drawSideView(ctx, x, y, w, h, bottomDepth, topDepth, length, offsetY,
+                             gapFront, gapBack, topConn, bottomConn) {
+            const centerX = x + w / 2;
+            const topY = y + h * 0.25;
+            const bottomY = y + h * 0.75;
+            
+            // Scale to fit
+            const maxDepth = Math.max(bottomDepth, topDepth) + Math.abs(offsetY) * 2 + 10;
+            const scale = Math.min((w * 0.7) / maxDepth, (h * 0.4) / length);
+            
+            // TOP rectangle (DUCT - FIXED, always centered)
+            const topLeft = centerX - (topDepth * scale) / 2;
+            const topRight = centerX + (topDepth * scale) / 2;
+            
+            if (topConn === 'capped') {
+                ctx.fillStyle = '#34495e';
+            } else if (topConn === 's-lock') {
+                ctx.fillStyle = '#b0c4de';
+            } else {
+                ctx.fillStyle = '#95a5a6';
+            }
+            ctx.fillRect(topLeft, topY - 8, topDepth * scale, 16);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(topLeft, topY - 8, topDepth * scale, 16);
+            
+            // BOTTOM rectangle (FURNACE - offset by center offset)
+            const bottomLeft = centerX - (bottomDepth * scale) / 2 + (offsetY * scale);
+            const bottomRight = centerX + (bottomDepth * scale) / 2 + (offsetY * scale);
+            
+            ctx.fillStyle = bottomConn.includes('flange') || bottomConn === 'plenum-bend' ? '#8b9dc3' : '#95a5a6';
+            ctx.fillRect(bottomLeft, bottomY - 8, bottomDepth * scale, 16);
+            ctx.strokeRect(bottomLeft, bottomY - 8, bottomDepth * scale, 16);
+            
+            // Connect corners
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 1.5;
+            [
+                [topLeft, topY - 8, bottomLeft, bottomY - 8],
+                [topRight, topY - 8, bottomRight, bottomY - 8],
+                [topLeft, topY + 8, bottomLeft, bottomY + 8],
+                [topRight, topY + 8, bottomRight, bottomY + 8]
+            ].forEach(([x1, y1, x2, y2]) => {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            });
+            
+            // Dimension lines
+            ctx.strokeStyle = '#3498db';
+            ctx.fillStyle = '#3498db';
+            ctx.lineWidth = 1;
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            
+            // Top depth
+            drawDimensionLine(ctx, topLeft, topY - 20, topRight, topY - 20);
+            ctx.fillText(`${topDepth}"`, centerX, topY - 25);
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Existing Duct (fixed)', centerX, topY - 38);
+            
+            // Bottom depth
+            ctx.fillStyle = '#3498db';
+            ctx.font = 'bold 12px Arial';
+            drawDimensionLine(ctx, bottomLeft, bottomY + 30, bottomRight, bottomY + 30);
+            ctx.fillText(`${bottomDepth}"`, bottomLeft + (bottomDepth * scale) / 2, bottomY + 50);
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Furnace', bottomLeft + (bottomDepth * scale) / 2, bottomY + 63);
+            
+            // Height dimension
+            ctx.fillStyle = '#e67e22';
+            const heightLeft = Math.min(topLeft, bottomLeft) - 40;
+            drawDimensionLine(ctx, heightLeft, topY, heightLeft, bottomY);
+            ctx.save();
+            ctx.translate(heightLeft - 10, (topY + bottomY) / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(`${length}"`, 0, 0);
+            ctx.restore();
+            
+            // Edge gap annotations
+            if (offsetY !== 0 || gapFront !== 0 || gapBack !== 0) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = '#e74c3c';
+                
+                // Front edge gap (left side)
+                ctx.textAlign = 'right';
+                let frontGapText = '';
+                if (gapFront > 0.01) {
+                    frontGapText = `Duct ${gapFront.toFixed(2)}" out`;
+                } else if (gapFront < -0.01) {
+                    frontGapText = `Furn ${Math.abs(gapFront).toFixed(2)}" out`;
+                } else {
+                    frontGapText = 'Flush';
+                }
+                ctx.fillText(frontGapText, Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 30);
+                
+                // Back edge gap (right side)
+                ctx.textAlign = 'left';
+                let backGapText = '';
+                if (gapBack > 0.01) {
+                    backGapText = `Duct ${gapBack.toFixed(2)}" out`;
+                } else if (gapBack < -0.01) {
+                    backGapText = `Furn ${Math.abs(gapBack).toFixed(2)}" out`;
+                } else {
+                    backGapText = 'Flush';
+                }
+                ctx.fillText(backGapText, Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 30);
+                
+                // Center offset indicator (optional)
+                if (Math.abs(offsetY) > 0.01) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, topY + 8);
+                    ctx.lineTo(centerX, bottomY - 8);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            // Labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SIDE VIEW', centerX, y + 20);
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('Front/Back gaps ("out" = extends beyond)', centerX, y + 33);
+        }
+        
+        // Helper function to draw dimension lines with arrows
+        function drawDimensionLine(ctx, x1, y1, x2, y2) {
+            const arrowSize = 4;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            
+            // Left arrow
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x1 + arrowSize, y1 - arrowSize);
+            ctx.lineTo(x1 + arrowSize, y1 + arrowSize);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Right arrow
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - arrowSize, y2 - arrowSize);
+            ctx.lineTo(x2 - arrowSize, y2 + arrowSize);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Print order
+        function printOrder() {
+            window.print();
+        }
+        
+        // Submit order
+        function submitOrder() {
+            const gapLeft = parseFloat(document.getElementById('gap-left-input').value) || 0;
+            const gapRight = parseFloat(document.getElementById('gap-right-input').value) || 0;
+            const gapFront = parseFloat(document.getElementById('gap-front-input').value) || 0;
+            const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
+            
+            // Build offset description in field tech language
+            let offsetDescription = 'Edge Gaps:\n';
+            offsetDescription += `  Left: ${gapLeft > 0 ? 'Duct ' + gapLeft + '" outside furnace' : (gapLeft < 0 ? 'Furnace ' + Math.abs(gapLeft) + '" outside duct' : 'Flush')}\n`;
+            offsetDescription += `  Right: ${gapRight > 0 ? 'Duct ' + gapRight + '" outside furnace' : (gapRight < 0 ? 'Furnace ' + Math.abs(gapRight) + '" outside duct' : 'Flush')}\n`;
+            offsetDescription += `  Front: ${gapFront > 0 ? 'Duct ' + gapFront + '" outside furnace' : (gapFront < 0 ? 'Furnace ' + Math.abs(gapFront) + '" outside duct' : 'Flush')}\n`;
+            offsetDescription += `  Back: ${gapBack > 0 ? 'Duct ' + gapBack + '" outside furnace' : (gapBack < 0 ? 'Furnace ' + Math.abs(gapBack) + '" outside duct' : 'Flush')}`;
+            
+            const orderData = {
+                orientation: orientation,
+                dimensions: {
+                    bottomWidth: document.getElementById('bottom-width').value,
+                    bottomHeight: document.getElementById('bottom-height').value,
+                    topWidth: document.getElementById('top-width').value,
+                    topHeight: document.getElementById('top-height').value,
+                    length: document.getElementById('length').value
+                },
+                edgeGaps: {
+                    left: gapLeft,
+                    right: gapRight,
+                    front: gapFront,
+                    back: gapBack,
+                    description: offsetDescription
+                },
+                connections: {
+                    bottom: document.getElementById('bottom-connection').value,
+                    top: document.getElementById('top-connection').value
+                },
+                material: {
+                    gauge: document.getElementById('gauge').value,
+                    quantity: document.getElementById('quantity').value,
+                    squareFeet: document.getElementById('material-sqft').textContent,
+                    weight: document.getElementById('material-weight').textContent,
+                    slipCleats: document.getElementById('slip-cleats').textContent,
+                    driveCleats: document.getElementById('drive-cleats').textContent
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            // For now, just log to console and alert
+            // In production, this would send to a backend/database
+            console.log('Order submitted:', orderData);
+            
+            alert('Order submitted!\n\n' +
+                  'Orientation: ' + orientation.toUpperCase() + '\n' +
+                  'Bottom: ' + orderData.dimensions.bottomWidth + '×' + orderData.dimensions.bottomHeight + 
+                  ' (' + orderData.connections.bottom.replace('-', ' ') + ')\n' +
+                  'Top: ' + orderData.dimensions.topWidth + '×' + orderData.dimensions.topHeight + 
+                  ' (' + orderData.connections.top.replace('-', ' ') + ')\n' +
+                  'Height: ' + orderData.dimensions.length + '"\n\n' +
+                  offsetDescription + '\n\n' +
+                  'Material: ' + orderData.material.gauge + '\n' +
+                  'Quantity: ' + orderData.material.quantity + '\n\n' +
+                  'This would be sent to the shop in production.');
+        }
+        
+        // Initialize on load
+        window.onload = function() {
+            calculate();
+        };
+    </script>
+</body>
+</html>
