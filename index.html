@@ -785,9 +785,9 @@ const APP_CONFIG = {
 
 const COMPANY = {
   name: "K&E Sheet Metal, LLC",
-  address: "71 Dixon Road",
-  city: "Queensbury, NY 12804",
-  phone: "(518) 368-1587",
+  address: "Your Address Here",
+  city: "City, State ZIP",
+  phone: "(555) 000-0000",
   email: "info@kesheetmetal.com",
   website: "kesheetmetal.com",
 };
@@ -860,6 +860,7 @@ const COMPANY = {
     <span class="topbar-file" id="topbar-file">—</span>
     <div class="topbar-actions">
       <button class="btn btn-sm" onclick="refreshData()">↻ Refresh</button>
+      <button class="btn btn-sm" onclick="changeFile()">⇄ Change File</button>
       <button class="btn btn-sm" onclick="showSettings()">⚙ Settings</button>
       <button class="btn btn-sm" onclick="logout()">Sign Out</button>
     </div>
@@ -973,7 +974,7 @@ const FIELDS = [
 
 // ─── MSAL Init ───────────────────────────────────────────
 async function initMsal() {
-  if (APP_CONFIG.clientId === "2947c010-6632-4b0b-b4c0-5d7e343882c6") {
+  if (APP_CONFIG.clientId === "YOUR_CLIENT_ID_HERE") {
     showScreen("login");
     showToast("⚠ Set your CLIENT_ID in the APP_CONFIG block at the top of this file.", "error", 8000);
     return;
@@ -1006,17 +1007,6 @@ async function initMsal() {
 
 async function login() {
   try {
-    if (!msalInstance) {
-      msalInstance = new msal.PublicClientApplication({
-        auth: {
-          clientId:    APP_CONFIG.clientId,
-          authority:   APP_CONFIG.authority,
-          redirectUri: APP_CONFIG.redirectUri,
-        },
-        cache: { cacheLocation: "localStorage" }
-      });
-      await msalInstance.initialize();
-    }
     await msalInstance.loginPopup({ scopes: ["Files.Read"] });
     await getToken();
     restoreOrPick();
@@ -1191,6 +1181,15 @@ async function promptMapping(fileId, sheetName) {
         </select>
       </div>`;
   });
+}
+
+function changeFile() {
+  localStorage.removeItem("ke_last_file");
+  localStorage.removeItem("ke_column_mapping");
+  selectedFileId   = null;
+  selectedFileName = "";
+  columnMapping    = null;
+  showFilePicker();
 }
 
 function showSettings() {
