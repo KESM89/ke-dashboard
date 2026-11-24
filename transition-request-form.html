@@ -289,6 +289,13 @@
             margin-bottom: 8px;
             letter-spacing: 0.5px;
         }
+        .pick-label {
+            font-size: 13px;
+            color: #555;
+            margin: 8px 0 6px;
+        }
+        .side-name { font-weight: 700; color: #2c3e50; text-transform: uppercase; }
+        .side-pick button { min-height: 44px; }
         .seg {
             display: flex;
             gap: 6px;
@@ -407,51 +414,63 @@
                         <span class="help-text">Vertical distance needed</span>
                     </div>
                     
-                    <!-- OFFSETS: tech picks who sticks out + how much. Signs are handled internally. -->
+                    <!-- OFFSETS: tech picks the side he can reach, who sticks out, and how much. Signs handled internally. -->
                     <div class="form-group">
                         <label>Offsets (standing in front of furnace)</label>
-                        <span class="help-text" style="margin-bottom: 10px; display: block;">Measure the LEFT side and the FRONT side. We'll tell you what the other two sides should measure.</span>
-
-                        <!-- LEFT SIDE -->
+                        <span class="help-text" style="margin-bottom: 10px; display: block;">Measure ONE side left-to-right and ONE side front-to-back &mdash; whichever you can reach. We'll tell you what the other two sides should measure.</span>
+                        
+                        <!-- LEFT / RIGHT -->
                         <div class="offset-card">
-                            <div class="offset-title">LEFT SIDE</div>
-                            <div class="seg" data-side="left">
+                            <div class="offset-title">LEFT / RIGHT</div>
+                            <div class="pick-label">Which side did you measure?</div>
+                            <div class="seg side-pick" data-axis="lr">
+                                <button type="button" data-side="left" class="active">Left</button>
+                                <button type="button" data-side="right">Right</button>
+                            </div>
+                            <div class="pick-label">On the <span class="side-name" id="name-lr">left</span> side:</div>
+                            <div class="seg who-pick" data-axis="lr">
                                 <button type="button" data-who="duct" class="active">Duct sticks out</button>
                                 <button type="button" data-who="furnace">Furnace sticks out</button>
                                 <button type="button" data-who="flush">Flush</button>
                             </div>
-                            <div class="amount-row" id="amount-left">
+                            <div class="amount-row" id="amount-lr">
                                 <span>How much?</span>
-                                <input type="number" inputmode="numeric" min="0" id="whole-left" value="2" oninput="calculate()">
-                                <select id="frac-left" onchange="calculate()"></select>
+                                <input type="number" inputmode="numeric" min="0" id="whole-lr" value="2" oninput="calculate()">
+                                <select id="frac-lr" onchange="calculate()"></select>
                                 <span>in.</span>
                             </div>
                         </div>
-
-                        <!-- FRONT SIDE -->
+                        
+                        <!-- FRONT / BACK -->
                         <div class="offset-card">
-                            <div class="offset-title">FRONT SIDE</div>
-                            <div class="seg" data-side="front">
+                            <div class="offset-title">FRONT / BACK</div>
+                            <div class="pick-label">Which side did you measure?</div>
+                            <div class="seg side-pick" data-axis="fb">
+                                <button type="button" data-side="front" class="active">Front</button>
+                                <button type="button" data-side="back">Back</button>
+                            </div>
+                            <div class="pick-label">On the <span class="side-name" id="name-fb">front</span> side:</div>
+                            <div class="seg who-pick" data-axis="fb">
                                 <button type="button" data-who="duct">Duct sticks out</button>
                                 <button type="button" data-who="furnace">Furnace sticks out</button>
                                 <button type="button" data-who="flush" class="active">Flush</button>
                             </div>
-                            <div class="amount-row" id="amount-front" style="display:none;">
+                            <div class="amount-row" id="amount-fb" style="display:none;">
                                 <span>How much?</span>
-                                <input type="number" inputmode="numeric" min="0" id="whole-front" value="0" oninput="calculate()">
-                                <select id="frac-front" onchange="calculate()"></select>
+                                <input type="number" inputmode="numeric" min="0" id="whole-fb" value="0" oninput="calculate()">
+                                <select id="frac-fb" onchange="calculate()"></select>
                                 <span>in.</span>
                             </div>
                         </div>
-
+                        
                         <!-- CHECK: calculated opposite sides -->
                         <div class="check-box" id="offset-check">
-                            <div class="offset-title">✔ CHECK THESE ON THE JOB</div>
-                            <div><strong>Right side should be:</strong> <span id="check-right">—</span></div>
-                            <div><strong>Back side should be:</strong> <span id="check-back">—</span></div>
+                            <div class="offset-title">&#10004; CHECK THESE ON THE JOB (if you can reach them)</div>
+                            <div><strong><span id="check-lr-label">Right</span> side should be:</strong> <span id="check-lr">&mdash;</span></div>
+                            <div><strong><span id="check-fb-label">Back</span> side should be:</strong> <span id="check-fb">&mdash;</span></div>
                             <div class="help-text" style="margin-top: 6px;">If your tape says something different, re-check your opening sizes before you submit.</div>
                         </div>
-
+                        
                         <!-- Hidden signed values used by drawings + order (+ = duct sticks out, - = furnace sticks out) -->
                         <input type="hidden" id="gap-left-input" value="0">
                         <input type="hidden" id="gap-right-input" value="0">
@@ -587,33 +606,54 @@
         window.addEventListener('resize', resizeCanvas);
         
         // ---------- OFFSET ENTRY ----------
-        // Tech picks who sticks out (duct / furnace / flush) + amount for LEFT and FRONT.
+        // Per axis the tech picks: which side he measured, who sticks out, and how much.
         // Internally: + = duct sticks out past furnace, - = furnace sticks out past duct.
         // Opposite side is fixed by geometry: Left + Right = Duct width - Furnace width
         //                                     Front + Back = Duct depth - Furnace depth
-        const offsetWho = { left: 'duct', front: 'flush' };
+        const offsetState = {
+            lr: { side: 'left',  who: 'duct'  },
+            fb: { side: 'front', who: 'flush' }
+        };
+        const OPPOSITE = { left: 'right', right: 'left', front: 'back', back: 'front' };
+        const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
         
         // Fill fraction dropdowns in 1/8ths
         const FRACTIONS = ['0','1/8','1/4','3/8','1/2','5/8','3/4','7/8'];
         function fillFractionSelects() {
-            ['frac-left', 'frac-front'].forEach(id => {
+            ['frac-lr', 'frac-fb'].forEach(id => {
                 const sel = document.getElementById(id);
                 sel.innerHTML = FRACTIONS.map((f, i) =>
-                    `<option value="${i / 8}">${i === 0 ? '—' : f}</option>`).join('');
+                    `<option value="${i / 8}">${i === 0 ? '\u2014' : f}</option>`).join('');
             });
         }
         
-        // Hook up the Duct / Furnace / Flush buttons
+        // Make one button in a group active
+        function activate(group, btn) {
+            group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        
+        // Hook up the side-picker and Duct / Furnace / Flush buttons
         function setupOffsetButtons() {
-            document.querySelectorAll('.seg').forEach(seg => {
-                const side = seg.dataset.side;
-                seg.querySelectorAll('button').forEach(btn => {
+            document.querySelectorAll('.side-pick').forEach(group => {
+                const axis = group.dataset.axis;
+                group.querySelectorAll('button').forEach(btn => {
                     btn.addEventListener('click', () => {
-                        seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        offsetWho[side] = btn.dataset.who;
+                        activate(group, btn);
+                        offsetState[axis].side = btn.dataset.side;
+                        document.getElementById('name-' + axis).textContent = btn.dataset.side;
+                        calculate();
+                    });
+                });
+            });
+            document.querySelectorAll('.who-pick').forEach(group => {
+                const axis = group.dataset.axis;
+                group.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        activate(group, btn);
+                        offsetState[axis].who = btn.dataset.who;
                         // Hide amount entry when flush
-                        document.getElementById('amount-' + side).style.display =
+                        document.getElementById('amount-' + axis).style.display =
                             btn.dataset.who === 'flush' ? 'none' : 'flex';
                         calculate();
                     });
@@ -621,13 +661,14 @@
             });
         }
         
-        // Read one side's entry and return a signed number
-        function readSide(side) {
-            if (offsetWho[side] === 'flush') return 0;
-            const whole = parseFloat(document.getElementById('whole-' + side).value) || 0;
-            const frac = parseFloat(document.getElementById('frac-' + side).value) || 0;
+        // Read one axis entry and return the signed gap on the MEASURED side
+        function readAxis(axis) {
+            const st = offsetState[axis];
+            if (st.who === 'flush') return 0;
+            const whole = parseFloat(document.getElementById('whole-' + axis).value) || 0;
+            const frac = parseFloat(document.getElementById('frac-' + axis).value) || 0;
             const amount = Math.abs(whole) + frac;
-            return offsetWho[side] === 'duct' ? amount : -amount;
+            return st.who === 'duct' ? amount : -amount;
         }
         
         // Decimal inches -> tape-measure text, rounded to nearest 1/8 (e.g. 4.25 -> 4 1/4")
@@ -646,26 +687,32 @@
             return (gap > 0 ? 'Duct sticks out ' : 'Furnace sticks out ') + toFraction(gap);
         }
         
-        // Convert button/amount entries into the 4 signed gaps + update the check box
+        // Convert entries into the 4 signed gaps + update the check box
         function syncOffsets() {
             const topWidth = parseFloat(document.getElementById('top-width').value) || 0;
             const topHeight = parseFloat(document.getElementById('top-height').value) || 0;
             const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
             const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
             
-            const gapLeft = readSide('left');
-            const gapFront = readSide('front');
-            const gapRight = (topWidth - bottomWidth) - gapLeft;
-            const gapBack = (topHeight - bottomHeight) - gapFront;
+            const gaps = {};
+            // Left/Right axis: measured side + opposite side add up to the width difference
+            const lr = offsetState.lr.side;
+            gaps[lr] = readAxis('lr');
+            gaps[OPPOSITE[lr]] = (topWidth - bottomWidth) - gaps[lr];
+            // Front/Back axis: same idea with depth
+            const fb = offsetState.fb.side;
+            gaps[fb] = readAxis('fb');
+            gaps[OPPOSITE[fb]] = (topHeight - bottomHeight) - gaps[fb];
             
-            document.getElementById('gap-left-input').value = gapLeft;
-            document.getElementById('gap-front-input').value = gapFront;
-            document.getElementById('gap-right-input').value = gapRight;
-            document.getElementById('gap-back-input').value = gapBack;
+            ['left', 'right', 'front', 'back'].forEach(k =>
+                document.getElementById('gap-' + k + '-input').value = gaps[k]);
             
+            // Check box shows the sides he did NOT measure
             const haveSizes = topWidth && topHeight && bottomWidth && bottomHeight;
-            document.getElementById('check-right').textContent = haveSizes ? describeGap(gapRight) : '—';
-            document.getElementById('check-back').textContent = haveSizes ? describeGap(gapBack) : '—';
+            document.getElementById('check-lr-label').textContent = cap(OPPOSITE[lr]);
+            document.getElementById('check-fb-label').textContent = cap(OPPOSITE[fb]);
+            document.getElementById('check-lr').textContent = haveSizes ? describeGap(gaps[OPPOSITE[lr]]) : '\u2014';
+            document.getElementById('check-fb').textContent = haveSizes ? describeGap(gaps[OPPOSITE[fb]]) : '\u2014';
         }
         
         // Main calculation function
@@ -1121,12 +1168,13 @@
             const gapFront = parseFloat(document.getElementById('gap-front-input').value) || 0;
             const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
             
-            // Build offset description in field tech language
+            // Build offset description in field tech language, marking which sides came off a tape
+            const gapsBySide = { left: gapLeft, right: gapRight, front: gapFront, back: gapBack };
+            const measured = [offsetState.lr.side, offsetState.fb.side];
             let offsetDescription = 'Offsets (standing in front of furnace):\n';
-            offsetDescription += '  Left: ' + describeGap(gapLeft) + ' (measured)\n';
-            offsetDescription += '  Front: ' + describeGap(gapFront) + ' (measured)\n';
-            offsetDescription += '  Right: ' + describeGap(gapRight) + ' (calculated)\n';
-            offsetDescription += '  Back: ' + describeGap(gapBack) + ' (calculated)';
+            offsetDescription += ['left', 'right', 'front', 'back'].map(k =>
+                '  ' + cap(k) + ': ' + describeGap(gapsBySide[k]) +
+                (measured.includes(k) ? ' (measured)' : ' (calculated)')).join('\n');
             
             const orderData = {
                 orientation: orientation,
