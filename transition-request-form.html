@@ -97,6 +97,13 @@
                 padding: 12px;
             }
             
+            /* Offset buttons: keep 3 across on a phone */
+            .seg button {
+                padding: 10px 4px !important;
+                font-size: 14px !important;
+                min-height: 52px;
+            }
+            
             /* Readable help text */
             .help-text {
                 font-size: 13px;
@@ -266,6 +273,67 @@
             margin-top: 3px;
             font-style: italic;
         }
+
+        /* Offset entry cards */
+        .offset-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .offset-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .seg {
+            display: flex;
+            gap: 6px;
+        }
+        .seg button {
+            flex: 1;
+            padding: 12px 6px;
+            min-height: 48px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .seg button.active {
+            background: #3498db;
+            color: white;
+        }
+        .amount-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group .amount-row input,
+        .form-group .amount-row select {
+            width: auto;
+            min-width: 0;
+            font-size: 16px;
+        }
+        .form-group .amount-row input { flex: 0 0 64px; }   /* whole inches */
+        .form-group .amount-row select { flex: 1 1 90px; padding-left: 8px; padding-right: 4px; } /* fraction */
+        .check-box {
+            background: #e8f6ec;
+            border: 2px solid #27ae60;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .check-box .offset-title { color: #1e8449; }
         
         .alert {
             padding: 12px;
@@ -278,6 +346,14 @@
             background: #d1ecf1;
             color: #0c5460;
             border-left: 4px solid #17a2b8;
+        }
+
+        /* Phone fixes - kept last so they win over earlier rules */
+        .content > * { min-width: 0; }      /* let grid columns shrink to screen width */
+        #drawing-canvas { max-width: 100%; }
+        @media (max-width: 768px) {
+            .dimension-row { grid-template-columns: 1fr 1fr; gap: 10px; } /* two short numbers fit side by side */
+            .container { margin: 0; border-radius: 0; }
         }
     </style>
 </head>
@@ -331,33 +407,56 @@
                         <span class="help-text">Vertical distance needed</span>
                     </div>
                     
+                    <!-- OFFSETS: tech picks who sticks out + how much. Signs are handled internally. -->
                     <div class="form-group">
-                        <label>Edge Gaps (inches)</label>
-                        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
-                            <strong>💡 How to measure:</strong><br>
-                            • <strong>Positive (+):</strong> Duct extends beyond furnace (gap)<br>
-                            • <strong>Negative (-):</strong> Furnace extends beyond duct (overlap/hanging out)
-                        </div>
-                        <div class="dimension-row">
-                            <div>
-                                <input type="number" step="0.125" id="gap-left-input" placeholder="0" value="2" oninput="calculateOppositeGap('left')">
-                                <span class="help-text">Left edge gap</span>
+                        <label>Offsets (standing in front of furnace)</label>
+                        <span class="help-text" style="margin-bottom: 10px; display: block;">Measure the LEFT side and the FRONT side. We'll tell you what the other two sides should measure.</span>
+
+                        <!-- LEFT SIDE -->
+                        <div class="offset-card">
+                            <div class="offset-title">LEFT SIDE</div>
+                            <div class="seg" data-side="left">
+                                <button type="button" data-who="duct" class="active">Duct sticks out</button>
+                                <button type="button" data-who="furnace">Furnace sticks out</button>
+                                <button type="button" data-who="flush">Flush</button>
                             </div>
-                            <div>
-                                <input type="number" step="0.125" id="gap-right-input" placeholder="0" value="-2" oninput="calculateOppositeGap('right')">
-                                <span class="help-text">Right edge gap (auto)</span>
-                            </div>
-                        </div>
-                        <div class="dimension-row" style="margin-top: 10px;">
-                            <div>
-                                <input type="number" step="0.125" id="gap-front-input" placeholder="0" value="0" oninput="calculateOppositeGap('front')">
-                                <span class="help-text">Front edge gap</span>
-                            </div>
-                            <div>
-                                <input type="number" step="0.125" id="gap-back-input" placeholder="0" value="-2" oninput="calculateOppositeGap('back')">
-                                <span class="help-text">Back edge gap (auto)</span>
+                            <div class="amount-row" id="amount-left">
+                                <span>How much?</span>
+                                <input type="number" inputmode="numeric" min="0" id="whole-left" value="2" oninput="calculate()">
+                                <select id="frac-left" onchange="calculate()"></select>
+                                <span>in.</span>
                             </div>
                         </div>
+
+                        <!-- FRONT SIDE -->
+                        <div class="offset-card">
+                            <div class="offset-title">FRONT SIDE</div>
+                            <div class="seg" data-side="front">
+                                <button type="button" data-who="duct">Duct sticks out</button>
+                                <button type="button" data-who="furnace">Furnace sticks out</button>
+                                <button type="button" data-who="flush" class="active">Flush</button>
+                            </div>
+                            <div class="amount-row" id="amount-front" style="display:none;">
+                                <span>How much?</span>
+                                <input type="number" inputmode="numeric" min="0" id="whole-front" value="0" oninput="calculate()">
+                                <select id="frac-front" onchange="calculate()"></select>
+                                <span>in.</span>
+                            </div>
+                        </div>
+
+                        <!-- CHECK: calculated opposite sides -->
+                        <div class="check-box" id="offset-check">
+                            <div class="offset-title">✔ CHECK THESE ON THE JOB</div>
+                            <div><strong>Right side should be:</strong> <span id="check-right">—</span></div>
+                            <div><strong>Back side should be:</strong> <span id="check-back">—</span></div>
+                            <div class="help-text" style="margin-top: 6px;">If your tape says something different, re-check your opening sizes before you submit.</div>
+                        </div>
+
+                        <!-- Hidden signed values used by drawings + order (+ = duct sticks out, - = furnace sticks out) -->
+                        <input type="hidden" id="gap-left-input" value="0">
+                        <input type="hidden" id="gap-right-input" value="0">
+                        <input type="hidden" id="gap-front-input" value="0">
+                        <input type="hidden" id="gap-back-input" value="0">
                     </div>
                 </div>
                 
@@ -487,45 +586,92 @@
         window.addEventListener('load', resizeCanvas);
         window.addEventListener('resize', resizeCanvas);
         
-        // Auto-calculate opposite edge gap
-        function calculateOppositeGap(changedEdge) {
+        // ---------- OFFSET ENTRY ----------
+        // Tech picks who sticks out (duct / furnace / flush) + amount for LEFT and FRONT.
+        // Internally: + = duct sticks out past furnace, - = furnace sticks out past duct.
+        // Opposite side is fixed by geometry: Left + Right = Duct width - Furnace width
+        //                                     Front + Back = Duct depth - Furnace depth
+        const offsetWho = { left: 'duct', front: 'flush' };
+        
+        // Fill fraction dropdowns in 1/8ths
+        const FRACTIONS = ['0','1/8','1/4','3/8','1/2','5/8','3/4','7/8'];
+        function fillFractionSelects() {
+            ['frac-left', 'frac-front'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = FRACTIONS.map((f, i) =>
+                    `<option value="${i / 8}">${i === 0 ? '—' : f}</option>`).join('');
+            });
+        }
+        
+        // Hook up the Duct / Furnace / Flush buttons
+        function setupOffsetButtons() {
+            document.querySelectorAll('.seg').forEach(seg => {
+                const side = seg.dataset.side;
+                seg.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        offsetWho[side] = btn.dataset.who;
+                        // Hide amount entry when flush
+                        document.getElementById('amount-' + side).style.display =
+                            btn.dataset.who === 'flush' ? 'none' : 'flex';
+                        calculate();
+                    });
+                });
+            });
+        }
+        
+        // Read one side's entry and return a signed number
+        function readSide(side) {
+            if (offsetWho[side] === 'flush') return 0;
+            const whole = parseFloat(document.getElementById('whole-' + side).value) || 0;
+            const frac = parseFloat(document.getElementById('frac-' + side).value) || 0;
+            const amount = Math.abs(whole) + frac;
+            return offsetWho[side] === 'duct' ? amount : -amount;
+        }
+        
+        // Decimal inches -> tape-measure text, rounded to nearest 1/8 (e.g. 4.25 -> 4 1/4")
+        function toFraction(val) {
+            const eighths = Math.round(Math.abs(val) * 8);
+            const whole = Math.floor(eighths / 8);
+            let rem = eighths % 8, den = 8;
+            while (rem && rem % 2 === 0) { rem /= 2; den /= 2; }
+            if (!rem) return whole + '"';
+            return (whole ? whole + ' ' : '') + rem + '/' + den + '"';
+        }
+        
+        // Plain-English description of a signed gap
+        function describeGap(gap) {
+            if (Math.abs(gap) < 1 / 16) return 'Flush';
+            return (gap > 0 ? 'Duct sticks out ' : 'Furnace sticks out ') + toFraction(gap);
+        }
+        
+        // Convert button/amount entries into the 4 signed gaps + update the check box
+        function syncOffsets() {
             const topWidth = parseFloat(document.getElementById('top-width').value) || 0;
             const topHeight = parseFloat(document.getElementById('top-height').value) || 0;
             const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
             const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
             
-            if (!topWidth || !topHeight || !bottomWidth || !bottomHeight) {
-                calculate(); // Just recalculate without auto-filling
-                return;
-            }
+            const gapLeft = readSide('left');
+            const gapFront = readSide('front');
+            const gapRight = (topWidth - bottomWidth) - gapLeft;
+            const gapBack = (topHeight - bottomHeight) - gapFront;
             
-            // Calculate opposite gap based on geometry
-            // Formula: Left gap + Right gap = (Top width - Bottom width)
-            // So: Right gap = (Top width - Bottom width) - Left gap
+            document.getElementById('gap-left-input').value = gapLeft;
+            document.getElementById('gap-front-input').value = gapFront;
+            document.getElementById('gap-right-input').value = gapRight;
+            document.getElementById('gap-back-input').value = gapBack;
             
-            if (changedEdge === 'left') {
-                const gapLeft = parseFloat(document.getElementById('gap-left-input').value) || 0;
-                const gapRight = (topWidth - bottomWidth) - gapLeft;
-                document.getElementById('gap-right-input').value = gapRight.toFixed(2);
-            } else if (changedEdge === 'right') {
-                const gapRight = parseFloat(document.getElementById('gap-right-input').value) || 0;
-                const gapLeft = (topWidth - bottomWidth) - gapRight;
-                document.getElementById('gap-left-input').value = gapLeft.toFixed(2);
-            } else if (changedEdge === 'front') {
-                const gapFront = parseFloat(document.getElementById('gap-front-input').value) || 0;
-                const gapBack = (topHeight - bottomHeight) - gapFront;
-                document.getElementById('gap-back-input').value = gapBack.toFixed(2);
-            } else if (changedEdge === 'back') {
-                const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
-                const gapFront = (topHeight - bottomHeight) - gapBack;
-                document.getElementById('gap-front-input').value = gapFront.toFixed(2);
-            }
-            
-            calculate();
+            const haveSizes = topWidth && topHeight && bottomWidth && bottomHeight;
+            document.getElementById('check-right').textContent = haveSizes ? describeGap(gapRight) : '—';
+            document.getElementById('check-back').textContent = haveSizes ? describeGap(gapBack) : '—';
         }
         
         // Main calculation function
         function calculate() {
+            syncOffsets(); // turn button/amount entries into signed gaps first
+            
             // Get inputs
             const bottomWidth = parseFloat(document.getElementById('bottom-width').value) || 0;
             const bottomHeight = parseFloat(document.getElementById('bottom-height').value) || 0;
@@ -976,11 +1122,11 @@
             const gapBack = parseFloat(document.getElementById('gap-back-input').value) || 0;
             
             // Build offset description in field tech language
-            let offsetDescription = 'Edge Gaps:\n';
-            offsetDescription += `  Left: ${gapLeft > 0 ? 'Duct ' + gapLeft + '" outside furnace' : (gapLeft < 0 ? 'Furnace ' + Math.abs(gapLeft) + '" outside duct' : 'Flush')}\n`;
-            offsetDescription += `  Right: ${gapRight > 0 ? 'Duct ' + gapRight + '" outside furnace' : (gapRight < 0 ? 'Furnace ' + Math.abs(gapRight) + '" outside duct' : 'Flush')}\n`;
-            offsetDescription += `  Front: ${gapFront > 0 ? 'Duct ' + gapFront + '" outside furnace' : (gapFront < 0 ? 'Furnace ' + Math.abs(gapFront) + '" outside duct' : 'Flush')}\n`;
-            offsetDescription += `  Back: ${gapBack > 0 ? 'Duct ' + gapBack + '" outside furnace' : (gapBack < 0 ? 'Furnace ' + Math.abs(gapBack) + '" outside duct' : 'Flush')}`;
+            let offsetDescription = 'Offsets (standing in front of furnace):\n';
+            offsetDescription += '  Left: ' + describeGap(gapLeft) + ' (measured)\n';
+            offsetDescription += '  Front: ' + describeGap(gapFront) + ' (measured)\n';
+            offsetDescription += '  Right: ' + describeGap(gapRight) + ' (calculated)\n';
+            offsetDescription += '  Back: ' + describeGap(gapBack) + ' (calculated)';
             
             const orderData = {
                 orientation: orientation,
@@ -1030,10 +1176,10 @@
                   'This would be sent to the shop in production.');
         }
         
-        // Initialize on load
-        window.onload = function() {
-            calculate();
-        };
+        // Initialize (script is at end of body, so the elements already exist)
+        fillFractionSelects();
+        setupOffsetButtons();
+        calculate();
     </script>
 </body>
 </html>
