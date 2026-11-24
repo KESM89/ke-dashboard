@@ -375,57 +375,62 @@
             <!-- LEFT COLUMN: INPUT FORM -->
             <div>
                 <div class="section">
-                    <h2>Dimensions (inches)</h2>
-                    <div class="alert alert-info" style="margin-bottom: 15px;">
-                        Vertical orientation: Furnace on bottom, Duct on top
+                    <h2>Application</h2>
+                    <div class="form-group">
+                        <select id="application" onchange="applyApp(this.value)"></select>
                     </div>
+                    <div class="alert alert-info" id="app-note"></div>
+                </div>
+                
+                <div class="section">
+                    <h2>Dimensions (inches)</h2>
                     
                     <div class="form-group">
-                        <label>Bottom Opening (Furnace Side)</label>
+                        <label id="lbl-open-a">Bottom Opening (Furnace Side)</label>
                         <div class="dimension-row">
                             <div>
                                 <input type="number" id="bottom-width" placeholder="Left to Right" value="20" oninput="calculate()">
-                                <span class="help-text">Left to Right</span>
+                                <span class="help-text dim1-name">Left to Right</span>
                             </div>
                             <div>
                                 <input type="number" id="bottom-height" placeholder="Front to Back" value="18" oninput="calculate()">
-                                <span class="help-text">Front to Back</span>
+                                <span class="help-text dim2-name">Front to Back</span>
                             </div>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Top Opening (Existing Duct)</label>
+                        <label id="lbl-open-b">Top Opening (Existing Duct)</label>
                         <div class="dimension-row">
                             <div>
                                 <input type="number" id="top-width" placeholder="Left to Right" value="18" oninput="calculate()">
-                                <span class="help-text">Left to Right</span>
+                                <span class="help-text dim1-name">Left to Right</span>
                             </div>
                             <div>
                                 <input type="number" id="top-height" placeholder="Front to Back" value="12" oninput="calculate()">
-                                <span class="help-text">Front to Back</span>
+                                <span class="help-text dim2-name">Front to Back</span>
                             </div>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Height (to S-Lock overlap or connection point)</label>
+                        <label id="lbl-length">Height (to S-Lock overlap or connection point)</label>
                         <input type="number" id="length" placeholder="Height in inches" value="24" oninput="calculate()">
-                        <span class="help-text">Vertical distance needed</span>
+                        <span class="help-text" id="help-length">Vertical distance needed</span>
                     </div>
                     
                     <!-- OFFSETS: tech picks the side he can reach, who sticks out, and how much. Signs handled internally. -->
                     <div class="form-group">
-                        <label>Offsets (standing in front of furnace)</label>
+                        <label>Offsets (<span id="lbl-stance">standing in front of furnace</span>)</label>
                         <span class="help-text" style="margin-bottom: 10px; display: block;">Measure ONE side left-to-right and ONE side front-to-back &mdash; whichever you can reach. We'll tell you what the other two sides should measure.</span>
                         
                         <!-- LEFT / RIGHT -->
                         <div class="offset-card">
-                            <div class="offset-title">LEFT / RIGHT</div>
+                            <div class="offset-title" id="title-lr">LEFT / RIGHT</div>
                             <div class="pick-label">Which side did you measure?</div>
                             <div class="seg side-pick" data-axis="lr">
-                                <button type="button" data-side="left" class="active">Left</button>
-                                <button type="button" data-side="right">Right</button>
+                                <button type="button" data-side="left" class="active" id="btn-left">Left</button>
+                                <button type="button" data-side="right" id="btn-right">Right</button>
                             </div>
                             <div class="pick-label">On the <span class="side-name" id="name-lr">left</span> side:</div>
                             <div class="seg who-pick" data-axis="lr">
@@ -443,11 +448,11 @@
                         
                         <!-- FRONT / BACK -->
                         <div class="offset-card">
-                            <div class="offset-title">FRONT / BACK</div>
+                            <div class="offset-title" id="title-fb">FRONT / BACK</div>
                             <div class="pick-label">Which side did you measure?</div>
                             <div class="seg side-pick" data-axis="fb">
-                                <button type="button" data-side="front" class="active">Front</button>
-                                <button type="button" data-side="back">Back</button>
+                                <button type="button" data-side="front" class="active" id="btn-front">Front</button>
+                                <button type="button" data-side="back" id="btn-back">Back</button>
                             </div>
                             <div class="pick-label">On the <span class="side-name" id="name-fb">front</span> side:</div>
                             <div class="seg who-pick" data-axis="fb">
@@ -483,7 +488,7 @@
                     <h2>Connection Types</h2>
                     
                     <div class="form-group">
-                        <label>Bottom Connection (Furnace Side)</label>
+                        <label id="lbl-conn-a">Bottom Connection (Furnace Side)</label>
                         <select id="bottom-connection" onchange="calculate()">
                             <option value="plenum-bend" selected>Plenum Bend</option>
                             <option value="1in-outside-flange">1" Outside Flange</option>
@@ -493,7 +498,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Top Connection (Duct Side)</label>
+                        <label id="lbl-conn-b">Top Connection (Duct Side)</label>
                         <select id="top-connection" onchange="calculate()">
                             <option value="plenum-bend">Plenum Bend</option>
                             <option value="1in-outside-flange">1" Outside Flange</option>
@@ -574,8 +579,78 @@
           }
         };
         
-        // State - always vertical orientation
-        const orientation = 'vertical';
+        // ---------- APPLICATIONS ----------
+        // Every setup is the same part: opening A (furnace) -> opening B (existing duct),
+        // a length, and offsets on two axes. Only the WORDS and default connections change.
+        // To add a setup (downflow, return drop, etc.) add one entry here.
+        // Internal keys never change: left/right = axis 1, front/back = axis 2.
+        const APPS = {
+            'upflow-supply': {
+                name: 'Upflow Furnace \u2013 Supply Plenum',
+                note: 'Furnace on the bottom, supply goes UP into the existing duct.',
+                stance: 'standing in front of the furnace',
+                openA: 'Bottom Opening (Furnace Supply)',
+                openB: 'Top Opening (Existing Duct)',
+                dim1: 'Left to Right', dim2: 'Front to Back',
+                length: 'Height (to S-Lock overlap or connection point)',
+                lengthHelp: 'Vertical distance needed',
+                sides: { left: 'Left', right: 'Right', front: 'Front', back: 'Back' },
+                connA: 'Bottom Connection (Furnace Side)',
+                connB: 'Top Connection (Duct Side)',
+                defaults: { a: 'plenum-bend', b: 's-lock' },
+                view1: 'FRONT VIEW', view2: 'SIDE VIEW'
+            },
+            'horizontal-supply': {
+                name: 'Horizontal Furnace \u2013 Supply',
+                note: 'Furnace lying on its side, supply goes SIDEWAYS into the existing duct. Drawings are shown with the furnace end at the bottom.',
+                stance: 'looking from the furnace toward the duct',
+                openA: 'Furnace Supply Opening',
+                openB: 'Existing Duct Opening',
+                dim1: 'Side to Side', dim2: 'Top to Bottom',
+                length: 'Length (to S-Lock overlap or connection point)',
+                lengthHelp: 'Horizontal distance needed',
+                sides: { left: 'Left', right: 'Right', front: 'Top', back: 'Bottom' },
+                connA: 'Furnace Side Connection',
+                connB: 'Duct Side Connection',
+                defaults: { a: 'plenum-bend', b: 's-lock' },
+                view1: 'TOP VIEW (looking down)', view2: 'SIDE VIEW'
+            }
+        };
+        let currentApp = 'upflow-supply';
+        const L = () => APPS[currentApp];   // labels for the current application
+        
+        // Fill the application dropdown
+        function fillAppSelect() {
+            const sel = document.getElementById('application');
+            sel.innerHTML = Object.entries(APPS).map(([k, a]) =>
+                `<option value="${k}">${a.name}</option>`).join('');
+            sel.value = currentApp;
+        }
+        
+        // Swap every label on the page to match the chosen application
+        function applyApp(key) {
+            currentApp = key;
+            const a = L();
+            const set = (id, txt) => document.getElementById(id).textContent = txt;
+            set('app-note', a.note);
+            set('lbl-open-a', a.openA);
+            set('lbl-open-b', a.openB);
+            document.querySelectorAll('.dim1-name').forEach(e => e.textContent = a.dim1);
+            document.querySelectorAll('.dim2-name').forEach(e => e.textContent = a.dim2);
+            set('lbl-length', a.length);
+            set('help-length', a.lengthHelp);
+            set('lbl-stance', a.stance);
+            set('title-lr', (a.sides.left + ' / ' + a.sides.right).toUpperCase());
+            set('title-fb', (a.sides.front + ' / ' + a.sides.back).toUpperCase());
+            ['left', 'right', 'front', 'back'].forEach(k => set('btn-' + k, a.sides[k]));
+            set('name-lr', a.sides[offsetState.lr.side]);
+            set('name-fb', a.sides[offsetState.fb.side]);
+            set('lbl-conn-a', a.connA);
+            set('lbl-conn-b', a.connB);
+            document.getElementById('bottom-connection').value = a.defaults.a;
+            document.getElementById('top-connection').value = a.defaults.b;
+            calculate();
+        }
         
         // Make canvas responsive
         function resizeCanvas() {
@@ -641,7 +716,7 @@
                     btn.addEventListener('click', () => {
                         activate(group, btn);
                         offsetState[axis].side = btn.dataset.side;
-                        document.getElementById('name-' + axis).textContent = btn.dataset.side;
+                        document.getElementById('name-' + axis).textContent = L().sides[btn.dataset.side];
                         calculate();
                     });
                 });
@@ -709,8 +784,8 @@
             
             // Check box shows the sides he did NOT measure
             const haveSizes = topWidth && topHeight && bottomWidth && bottomHeight;
-            document.getElementById('check-lr-label').textContent = cap(OPPOSITE[lr]);
-            document.getElementById('check-fb-label').textContent = cap(OPPOSITE[fb]);
+            document.getElementById('check-lr-label').textContent = L().sides[OPPOSITE[lr]];
+            document.getElementById('check-fb-label').textContent = L().sides[OPPOSITE[fb]];
             document.getElementById('check-lr').textContent = haveSizes ? describeGap(gaps[OPPOSITE[lr]]) : '\u2014';
             document.getElementById('check-fb').textContent = haveSizes ? describeGap(gaps[OPPOSITE[fb]]) : '\u2014';
         }
@@ -866,7 +941,7 @@
         function drawFrontView(ctx, x, y, w, h, bottomWidth, topWidth, length, offsetX, 
                               gapLeft, gapRight, topConn, bottomConn) {
             const centerX = x + w / 2;
-            const topY = y + h * 0.25;
+            const topY = y + Math.max(h * 0.25, 100); // leave room for title + labels
             const bottomY = y + h * 0.75;
             
             // Scale to fit
@@ -961,6 +1036,9 @@
                     leftGapText = 'Flush';
                 }
                 ctx.fillText(leftGapText, Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 30);
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(L().sides.left.toUpperCase(), Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 17);
+                ctx.font = '10px Arial';
                 
                 // Right edge gap
                 ctx.textAlign = 'left';
@@ -973,6 +1051,9 @@
                     rightGapText = 'Flush';
                 }
                 ctx.fillText(rightGapText, Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 30);
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(L().sides.right.toUpperCase(), Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 17);
+                ctx.font = '10px Arial';
                 
                 // Center offset indicator (optional - shows the calculated offset)
                 if (Math.abs(offsetX) > 0.01) {
@@ -991,16 +1072,16 @@
             ctx.fillStyle = '#2c3e50';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('FRONT VIEW', centerX, y + 20);
+            ctx.fillText(L().view1, centerX, y + 20);
             ctx.font = '9px Arial';
             ctx.fillStyle = '#7f8c8d';
-            ctx.fillText('Left/Right gaps ("out" = extends beyond)', centerX, y + 33);
+            ctx.fillText(L().sides.left + '/' + L().sides.right + ' offsets', centerX, y + 33);
         }
         
         function drawSideView(ctx, x, y, w, h, bottomDepth, topDepth, length, offsetY,
                              gapFront, gapBack, topConn, bottomConn) {
             const centerX = x + w / 2;
-            const topY = y + h * 0.25;
+            const topY = y + Math.max(h * 0.25, 100); // leave room for title + labels
             const bottomY = y + h * 0.75;
             
             // Scale to fit
@@ -1095,6 +1176,9 @@
                     frontGapText = 'Flush';
                 }
                 ctx.fillText(frontGapText, Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 30);
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(L().sides.front.toUpperCase(), Math.min(topLeft, bottomLeft) - 5, (topY + bottomY) / 2 + 17);
+                ctx.font = '10px Arial';
                 
                 // Back edge gap (right side)
                 ctx.textAlign = 'left';
@@ -1107,6 +1191,9 @@
                     backGapText = 'Flush';
                 }
                 ctx.fillText(backGapText, Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 30);
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(L().sides.back.toUpperCase(), Math.max(topRight, bottomRight) + 5, (topY + bottomY) / 2 + 17);
+                ctx.font = '10px Arial';
                 
                 // Center offset indicator (optional)
                 if (Math.abs(offsetY) > 0.01) {
@@ -1125,10 +1212,10 @@
             ctx.fillStyle = '#2c3e50';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('SIDE VIEW', centerX, y + 20);
+            ctx.fillText(L().view2, centerX, y + 20);
             ctx.font = '9px Arial';
             ctx.fillStyle = '#7f8c8d';
-            ctx.fillText('Front/Back gaps ("out" = extends beyond)', centerX, y + 33);
+            ctx.fillText(L().sides.front + '/' + L().sides.back + ' offsets', centerX, y + 33);
         }
         
         // Helper function to draw dimension lines with arrows
@@ -1171,13 +1258,13 @@
             // Build offset description in field tech language, marking which sides came off a tape
             const gapsBySide = { left: gapLeft, right: gapRight, front: gapFront, back: gapBack };
             const measured = [offsetState.lr.side, offsetState.fb.side];
-            let offsetDescription = 'Offsets (standing in front of furnace):\n';
+            let offsetDescription = 'Offsets (' + L().stance + '):\n';
             offsetDescription += ['left', 'right', 'front', 'back'].map(k =>
-                '  ' + cap(k) + ': ' + describeGap(gapsBySide[k]) +
+                '  ' + L().sides[k] + ': ' + describeGap(gapsBySide[k]) +
                 (measured.includes(k) ? ' (measured)' : ' (calculated)')).join('\n');
             
             const orderData = {
-                orientation: orientation,
+                application: L().name,
                 dimensions: {
                     bottomWidth: document.getElementById('bottom-width').value,
                     bottomHeight: document.getElementById('bottom-height').value,
@@ -1212,12 +1299,12 @@
             console.log('Order submitted:', orderData);
             
             alert('Order submitted!\n\n' +
-                  'Orientation: ' + orientation.toUpperCase() + '\n' +
-                  'Bottom: ' + orderData.dimensions.bottomWidth + '×' + orderData.dimensions.bottomHeight + 
+                  'Application: ' + L().name + '\n' +
+                  'Furnace: ' + orderData.dimensions.bottomWidth + '×' + orderData.dimensions.bottomHeight + 
                   ' (' + orderData.connections.bottom.replace('-', ' ') + ')\n' +
-                  'Top: ' + orderData.dimensions.topWidth + '×' + orderData.dimensions.topHeight + 
+                  'Duct: ' + orderData.dimensions.topWidth + '×' + orderData.dimensions.topHeight + 
                   ' (' + orderData.connections.top.replace('-', ' ') + ')\n' +
-                  'Height: ' + orderData.dimensions.length + '"\n\n' +
+                  (currentApp.startsWith('horizontal') ? 'Length: ' : 'Height: ') + orderData.dimensions.length + '"\n\n' +
                   offsetDescription + '\n\n' +
                   'Material: ' + orderData.material.gauge + '\n' +
                   'Quantity: ' + orderData.material.quantity + '\n\n' +
@@ -1227,7 +1314,8 @@
         // Initialize (script is at end of body, so the elements already exist)
         fillFractionSelects();
         setupOffsetButtons();
-        calculate();
+        fillAppSelect();
+        applyApp(currentApp);
     </script>
 </body>
 </html>
